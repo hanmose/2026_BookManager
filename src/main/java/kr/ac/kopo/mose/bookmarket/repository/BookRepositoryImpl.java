@@ -1,17 +1,19 @@
-package kr.ac.kopo.kim.bookmarket.repository;
+package kr.ac.kopo.mose.bookmarket.repository;
+
+
 import kr.ac.kopo.mose.bookmarket.domain.Book;
-import kr.ac.kopo.mose.bookmarket.repository.BookRepository;
+import kr.ac.kopo.mose.bookmarket.domain.Book;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
 @Repository
 public class BookRepositoryImpl implements BookRepository {
-    private List<Book> listOfBooks = new ArrayList<Book>();
+    private List<kr.ac.kopo.mose.bookmarket.domain.Book> listOfBooks = new ArrayList<kr.ac.kopo.mose.bookmarket.domain.Book>();
 
     public BookRepositoryImpl(){
-        Book book1 = new Book();
+        kr.ac.kopo.mose.bookmarket.domain.Book book1 = new kr.ac.kopo.mose.bookmarket.domain.Book();
         book1.setBookId("isbn1001");
         book1.setName("스프링 부트 완전정복");
         book1.setDescription("스프링 부트는 스프링을 기반으로 쉽고 빠르게 웹 애플리케이션을 개발할 수 있는 도구이다. 이 책에서는 스프링 부트의 기본 개념을 쉽게 이해하고 다양한 실습 예제로 빠르게 익힐 수 있다. 그리고 단계별 실습을 따라 하다 보면 도서 쇼핑몰 구축 프로젝트를 완성할 수 있다. 개념-실습-프로젝트의 3단계 학습으로 스프링 부트를 제대로 익힌다면 개발 시간을 단축하고 생산성을 높일 수 있는 개발자로 성장할 수 있다.");
@@ -20,7 +22,7 @@ public class BookRepositoryImpl implements BookRepository {
         book1.setUnitPrice(new BigDecimal(35000));
         book1.setReleaseDate("2024/12/31");
 
-        Book book2 = new Book();
+        kr.ac.kopo.mose.bookmarket.domain.Book book2 = new kr.ac.kopo.mose.bookmarket.domain.Book();
         book2.setBookId("isbn1002");
         book2.setName("오만과 편견");
         book2.setDescription("제인 오스틴이 구사하는 재현의 기술은 셰익스피어에 비견할 만하다.\n" +
@@ -35,8 +37,64 @@ public class BookRepositoryImpl implements BookRepository {
         listOfBooks.add(book2);
 
     }
+
     @Override
-    public List<Book> getAllBookList(){
-        return List.of();
+    public List<Book> getAllBookList() {
+        return listOfBooks;
+    }
+
+    @Override
+    public Book getBookById(String bookId) {
+        Book book = null;
+        for (Book searchBook: listOfBooks){
+            if (searchBook != null && searchBook.getBookId() != null && searchBook.getBookId().equals(bookId)){
+                book = searchBook;
+                break;
+            }
+        }
+
+        if (book == null){
+            throw new IllegalArgumentException("도서ID가 " + bookId + "인 도서는 찾을 수가 없습니다.");
+        }
+
+        return book;
+    }
+
+    @Override
+    public List<Book> getBookListByCategory(String category) {
+        List<Book> booksByCategory = new ArrayList<Book>();
+        for (Book searchBook : listOfBooks){
+            if (category.equalsIgnoreCase(searchBook.getCategory()))
+                booksByCategory.add(searchBook);
+        }
+
+        return booksByCategory;
+    }
+
+    @Override
+    public Set<Book> getBookListByFilter(Map<String, List<String>> filter) {
+        Set<Book> booksByCategory = new HashSet<Book>();
+        Set<Book> booksByPublisher = new HashSet<Book>();
+        Set<String> booksByFilter = filter.keySet();
+
+        if (booksByFilter.contains("publisher")) {
+            for (String publisherName : filter.get("publisher")) {
+                for (Book searchBook : listOfBooks) {
+                    if (publisherName.equalsIgnoreCase(searchBook.getPublisher()))
+                        booksByPublisher.add(searchBook);
+                }
+            }
+        }
+
+        if (booksByFilter.contains("category")) {
+            for (String category : filter.get("category")) {
+                List<Book> list = getBookListByCategory(category);
+                booksByCategory.addAll(list);
+            }
+        }
+
+        booksByCategory.retainAll(booksByPublisher);
+
+        return booksByCategory;
     }
 }
