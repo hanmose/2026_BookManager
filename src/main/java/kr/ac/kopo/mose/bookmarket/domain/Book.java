@@ -3,12 +3,11 @@ package kr.ac.kopo.mose.bookmarket.domain;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 
 @Data
-@Setter
-@Getter
 public class Book {
     private String bookId;//도서 ID
     private String name;//도서제목
@@ -20,4 +19,6 @@ public class Book {
     private long unitsInStock;//재고수
     private String releaseDate;//출판일
     private String condition;//신규도서, 중고도서, E-Book
+    private String fileName; //도서이미지파일이름
+    private MultipartFile bookImage; //도서이미지파일정보객체
 }
