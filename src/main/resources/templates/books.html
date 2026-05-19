@@ -29,6 +29,12 @@
 
 	<div class="row align-items-md-stretch text-center">
 		<div class="col-md-4" th:each="book : ${bookList}">
+
+			<img th:src="'/BookMarket/images/' + ${book.getFileName()}" style="width: 90%">
+			<div class="text-center">
+				<a style="text-decoration-line: none" th:href="@{download(file=${book.getFileName()})}">이미지다운로드</a>
+			</div>
+
 			<h3 th:text="${book.name}"></h3>
 			<p th:text="${book.author}"></p>
 			<p th:text="${book.publisher} + ' | ' + ${book.releaseDate}"></p>
