@@ -1,5 +1,7 @@
 package kr.ac.kopo.mose.bookmarket.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import kr.ac.kopo.mose.bookmarket.domain.Book;
 import kr.ac.kopo.mose.bookmarket.service.BookService;
 import org.apache.juli.logging.Log;
@@ -7,14 +9,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.FileCopyUtils;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
-import jakarta.servlet.http.HttpServletResponse; // Spring Boot 3.x 기준 (2.x 이하인 경우 javax.servlet.http.HttpServletResponse)
-import org.springframework.util.FileCopyUtils;     // 파일 복사용 유틸리티 추가
-
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,12 +61,16 @@ public class BookController {
     }
 
     @GetMapping("/add")
-    public String requestAddBookForm(){
+    public String requestAddBookForm(Model model){
+        model.addAttribute("book", new Book());
         return "addBook";
     }
 
     @PostMapping("/add")
-    public String submitAddNewBook(@ModelAttribute Book book){
+    public String submitAddNewBook(@Valid @ModelAttribute Book book, BindingResult bindingResult){
+        if (bindingResult.hasErrors())
+            return "addBook";
+
         MultipartFile bookImage = book.getBookImage();
         System.out.println("파일사이즈" + bookImage.getSize());
         String saveName = bookImage.getOriginalFilename();
@@ -84,27 +92,25 @@ public class BookController {
         model.addAttribute("addTitle", "신규 도서 등록");
     }
 
-    // ----------------------------------------
-    // [추가된 이미지 다운로드 메서드]
-    // ----------------------------------------
+
     @GetMapping("/download")
-    public void downloadBookImage(@RequestParam("file") String paramKey, HttpServletResponse response) {
-        File imgFile = new File(fileDir + File.separator + paramKey);
+    public void downloadBookImage(@RequestParam("file") String paramKey, HttpServletResponse response){
+        File imgFile = new File(fileDir + paramKey);
 
         response.setContentType("application/download");
-        response.setContentLength((int) imgFile.length());
+        response.setContentLength((int)imgFile.length());
         response.setHeader("Content-Disposition", "attachment;filename=\"" + paramKey + "\"");
 
-        // try-with-resources 구문을 사용하여 스트림 자원이 자동으로 닫히도록 개선 (에러 방지)
-        try (InputStream fileIn = new FileInputStream(imgFile);
-             OutputStream out = response.getOutputStream()) {
-
+        try {
+            OutputStream out = response.getOutputStream();
+            FileInputStream fileIn = new FileInputStream(imgFile);
             FileCopyUtils.copy(fileIn, out);
-            out.flush(); // 데이터를 완전히 밀어내기
-
+            fileIn.close();
+            out.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
     }
 
     @GetMapping("/all")
