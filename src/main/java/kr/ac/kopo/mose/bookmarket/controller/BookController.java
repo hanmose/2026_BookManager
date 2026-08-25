@@ -1,15 +1,21 @@
 package kr.ac.kopo.mose.bookmarket.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import kr.ac.kopo.mose.bookmarket.domain.Book;
+import kr.ac.kopo.mose.bookmarket.exception.BookIdException;
+import kr.ac.kopo.mose.bookmarket.exception.CategoryException;
 import kr.ac.kopo.mose.bookmarket.service.BookService;
+import kr.ac.kopo.mose.bookmarket.validator.BookValidator;
+import kr.ac.kopo.mose.bookmarket.validator.UnitsInStockValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
@@ -27,6 +33,12 @@ import java.util.Set;
 public class BookController {
     @Autowired
     private BookService bookService;
+
+//    @Autowired
+//    private UnitsInStockValidator unitsInStockValidator;
+
+    @Autowired
+    private BookValidator bookValidator;
 
     @Value("${file.uploadDir}")
     String fileDir;
@@ -48,6 +60,10 @@ public class BookController {
     @GetMapping("/{category}")
     public String requestBooksByCategory(@PathVariable("category") String bookCategory, Model model){
         List<Book> booksByCategory = bookService.getBookListByCategory(bookCategory);
+//        카테고리를 존재하지 않으면 강제로 CategoryException을 발생
+        if(booksByCategory == null || booksByCategory.isEmpty())
+            throw new CategoryException();
+
         model.addAttribute("bookList", booksByCategory);
         return "books";
     }
@@ -112,6 +128,11 @@ public class BookController {
 
     }
 
+    @InitBinder
+    public void initBinder(WebDataBinder binder){
+        binder.setValidator(bookValidator);
+    }
+
     @GetMapping("/all")
     public ModelAndView requestAllBooks(){
         ModelAndView modelAndView = new ModelAndView();
@@ -119,5 +140,15 @@ public class BookController {
         modelAndView.addObject("bookList", list);
         modelAndView.setViewName("books");
         return modelAndView;
+    }
+
+    @ExceptionHandler(value = {BookIdException.class})
+    public ModelAndView handleError(HttpServletRequest request, BookIdException exception){
+        ModelAndView mav = new ModelAndView();
+        mav.addObject("invalidBookId", exception.getBookId());
+        mav.addObject("exception", exception);
+        mav.addObject("url", request.getRequestURL()+"?"+request.getQueryString());
+        mav.setViewName("errorBookId");
+        return mav;
     }
 }
