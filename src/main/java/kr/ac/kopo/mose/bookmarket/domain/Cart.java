@@ -11,11 +11,11 @@ import java.util.Map;
 @ToString
 public class Cart {
     private String cartId;
-    private Map<String, kr.ac.kopo.mose.bookmarket.domain.CartItem> cartItems;
+    private Map<String, CartItem> cartItems;
     private BigDecimal grandTotal;
 
     public Cart() {
-        cartItems = new HashMap<String, kr.ac.kopo.mose.bookmarket.domain.CartItem>();
+        cartItems = new HashMap<String, CartItem>();
         grandTotal = new BigDecimal(0);
     }
 
@@ -23,4 +23,32 @@ public class Cart {
         this();
         this.cartId = cartId;
     }
+
+    public void updateGrandTotal(){
+        grandTotal = new BigDecimal(0);
+        for (CartItem item: cartItems.values()){
+            grandTotal = grandTotal.add(item.getTotalPrice());
+        }
+    }
+
+    public void addCartItem(CartItem item){
+        String bookId = item.getBook().getBookId();
+
+        if(cartItems.containsKey(bookId)){
+            CartItem cartItem = cartItems.get(bookId);
+            cartItem.setQuantity(cartItem.getQuantity() + item.getQuantity());
+            cartItems.put(bookId, cartItem);
+        }else {
+            cartItems.put(bookId, item);
+        }
+
+        updateGrandTotal();
+    }
+
+    public void removeCartItem(CartItem item){
+        String bookId = item.getBook().getBookId();
+        cartItems.remove(bookId);
+        updateGrandTotal();
+    }
+
 }

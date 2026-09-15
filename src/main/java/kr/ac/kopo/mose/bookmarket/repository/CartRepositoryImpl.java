@@ -29,4 +29,13 @@ public class CartRepositoryImpl implements CartRepository{
     public Cart read(String cartId) {
         return listOfCarts.get(cartId);
     }
+
+    @Override
+    public void update(String cartId, Cart cart) {
+        if (!listOfCarts.keySet().contains(cart.getCartId())){
+            throw new IllegalArgumentException(String.format("장바구니 목록을 갱신할 수 없습니다. 장바구니 %s id가 존재하지 않습니다.", cartId));
+        }
+
+        listOfCarts.put(cartId, cart);
+    }
 }
