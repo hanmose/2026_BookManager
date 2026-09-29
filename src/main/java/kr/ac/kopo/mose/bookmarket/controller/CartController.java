@@ -66,7 +66,7 @@ public class CartController {
     }
 
     @DeleteMapping("/book/{bookId}")
-    @ResponseStatus(value = HttpStatus.NO_CONTENT)
+    @ResponseStatus(value = HttpStatus.NO_CONTENT)//생략(기본):정상적 실행에 대한 응답(200), 정상+반환값없다: 204
     public void removeCartByItem(@PathVariable("bookId") String bookId, HttpServletRequest request){
         String sessionId = request.getSession(true).getId();
 
@@ -83,5 +83,11 @@ public class CartController {
         cart.removeCartItem(new CartItem(book));
 
         cartService.update(sessionId, cart);
+    }
+
+    @DeleteMapping("/{cartId}")
+    @ResponseStatus(value = HttpStatus.NO_CONTENT)
+    public void deleteCartList(@PathVariable("cartId") String cartId){
+        cartService.delete(cartId);
     }
 }
